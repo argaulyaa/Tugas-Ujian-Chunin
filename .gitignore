@@ -9,5 +9,6 @@ __pycache__/
 evidence/
 .env.backup-*
 visitor_logs.json
+.image-tag
 
 local-data/

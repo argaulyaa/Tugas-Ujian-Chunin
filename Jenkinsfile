@@ -13,7 +13,6 @@ pipeline {
 
     environment {
         IMAGE_NAME    = 'visitor-log-backend'
-        IMAGE_TAG     = "${env.GIT_COMMIT ?: env.BUILD_NUMBER}"
         FRONTEND_PORT = '8090'
     }
 
@@ -44,8 +43,11 @@ pipeline {
             steps {
                 sh '''
                     set -eu
-                    docker build -t "$IMAGE_NAME:$IMAGE_TAG" -t "$IMAGE_NAME:latest" backend
-                    docker image inspect "$IMAGE_NAME:$IMAGE_TAG" --format '{{.Id}}'
+                    TAG="$(git rev-parse --short=12 HEAD)"
+                    echo "$TAG" > .image-tag
+                    docker build -t "$IMAGE_NAME:$TAG" -t "$IMAGE_NAME:latest" backend
+                    docker image inspect "$IMAGE_NAME:$TAG" --format '{{.Id}}'
+                    echo "Built $IMAGE_NAME:$TAG"
                 '''
             }
         }
@@ -55,10 +57,12 @@ pipeline {
                 withCredentials([file(credentialsId: 'visitor-log-env', variable: 'APP_ENV_FILE')]) {
                     sh '''
                         set -eu
-                        IMAGE_TAG="$IMAGE_TAG" docker compose \
+                        TAG="$(cat .image-tag)"
+                        IMAGE_TAG="$TAG" docker compose \
                             --env-file "$APP_ENV_FILE" \
                             up -d --no-build --remove-orphans
                         docker compose --env-file "$APP_ENV_FILE" ps
+                        echo "Deployed $IMAGE_NAME:$TAG"
                     '''
                 }
             }
@@ -88,7 +92,7 @@ pipeline {
 
     post {
         success {
-            echo "Deployed ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+            echo "Deployed ${env.IMAGE_NAME} — health check passed"
         }
         failure {
             echo 'Pipeline failed — inspect the failing stage above; do not reset stored data.'
