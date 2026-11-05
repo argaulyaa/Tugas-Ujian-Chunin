@@ -1,23 +1,94 @@
-// VM-specific pipeline; application secrets remain in the private host .env.
+// Declarative pipeline. Portable: no host-specific paths, no hardcoded IPs.
+// Application secrets live in the Jenkins secret-file credential `visitor-log-env`
+// (content = the .env file: AUTH_USERNAME, AUTH_SALT, AUTH_PASSWORD_HASH, FRONTEND_PORT).
 pipeline {
- agent any
- options { disableConcurrentBuilds(); skipDefaultCheckout(true); timeout(time:15, unit:'MINUTES') }
- stages {
-  stage('Checkout') { steps { checkout scm } }
-  stage('Test') { steps { sh '''docker run --rm --volumes-from visitor-log-jenkins -w "$WORKSPACE" python:3.12-slim python -m unittest discover -s tests -v''' } }
-  stage('Build') { steps { sh 'docker build -t visitor-log-backend:deploy backend' } }
-  stage('Deploy') { steps {
-   sh '''set -eu
-    docker run --rm --volumes-from visitor-log-jenkins -v /home/ubuntu/cloud-computing:/home/ubuntu/cloud-computing -w "$WORKSPACE" python:3.12-slim python -c 'import pathlib,shutil; src=pathlib.Path("frontend"); dst=pathlib.Path("/home/ubuntu/cloud-computing/visitor-log-app/frontend"); [shutil.copy2(p,dst/p.name) for p in src.iterdir() if p.is_file()]'
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v /home/ubuntu/cloud-computing:/home/ubuntu/cloud-computing -v /usr/bin/docker:/usr/local/bin/docker:ro -v /usr/libexec/docker/cli-plugins/docker-compose:/usr/local/lib/docker/cli-plugins/docker-compose:ro python:3.12-slim docker compose -f /home/ubuntu/cloud-computing/compose.deploy.yml --env-file /home/ubuntu/cloud-computing/.env up -d --no-build
-   '''
-  } }
-  stage('Health Check') { steps { sh '''set -eu
-   for n in $(seq 1 20); do
-    if curl -fsS --max-time 3 http://172.20.100.100:8090/api/health && curl -fsS --max-time 3 -o /dev/null http://172.20.100.100:8090/login.html; then exit 0; fi
-    sleep 3
-   done
-   exit 1
-   ''' } }
- }
+    agent any
+
+    options {
+        disableConcurrentBuilds()
+        skipDefaultCheckout(true)
+        timeout(time: 20, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    environment {
+        IMAGE_NAME    = 'visitor-log-backend'
+        IMAGE_TAG     = "${env.GIT_COMMIT ?: env.BUILD_NUMBER}"
+        FRONTEND_PORT = '8090'
+    }
+
+    triggers {
+        // Requires the GitHub plugin and "GitHub hook trigger for GITScm polling"
+        // enabled on the job; the webhook URL is the public (ngrok) Jenkins URL.
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Syntax Check') {
+            steps {
+                sh '''
+                    set -eu
+                    docker run --rm -v "$WORKSPACE":/src -w /src python:3.11-slim \
+                        sh -c 'python -m py_compile backend/app.py setup_account.py && python -m unittest discover -s tests -v'
+                '''
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                sh '''
+                    set -eu
+                    docker build -t "$IMAGE_NAME:$IMAGE_TAG" -t "$IMAGE_NAME:latest" backend
+                    docker image inspect "$IMAGE_NAME:$IMAGE_TAG" --format '{{.Id}}'
+                '''
+            }
+        }
+
+        stage('Automated Deployment') {
+            steps {
+                withCredentials([file(credentialsId: 'visitor-log-env', variable: 'APP_ENV_FILE')]) {
+                    sh '''
+                        set -eu
+                        IMAGE_TAG="$IMAGE_TAG" docker compose \
+                            --env-file "$APP_ENV_FILE" \
+                            up -d --no-build --remove-orphans
+                        docker compose --env-file "$APP_ENV_FILE" ps
+                    '''
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                    set -eu
+                    for attempt in $(seq 1 20); do
+                        if docker compose exec -T frontend wget -qO- http://127.0.0.1/api/health | grep -q '"status": "ok"'; then
+                            echo "Health check passed on attempt $attempt"
+                            exit 0
+                        fi
+                        sleep 3
+                    done
+                    echo "Health check failed; recent logs:"
+                    docker compose logs --tail=50
+                    exit 1
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployed ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+        }
+        failure {
+            echo 'Pipeline failed — inspect the failing stage above; do not reset stored data.'
+        }
+    }
 }
