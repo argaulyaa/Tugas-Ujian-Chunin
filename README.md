@@ -166,6 +166,12 @@ URL publik yang muncul dipakai sebagai **Payload URL** webhook GitHub:
 event **Just the push event**. URL ngrok gratis berubah tiap agent dijalankan ulang —
 perbarui webhook bila itu terjadi.
 
+> **Catatan lingkungan uji:** jaringan host pengujian memutus koneksi keluar ke semua edge
+> ngrok (`connection reset by peer` tepat setelah TLS), sehingga demonstrasi webhook di
+> mesin ini memakai **Cloudflare Tunnel** (`cloudflared tunnel --url http://127.0.0.1:8080`)
+> yang fungsinya setara — URL HTTPS publik yang sama-sama bisa dipasang sebagai Payload URL.
+> Perintah ngrok tetap berlaku di jaringan lain.
+
 ### 5. Lima stage di Jenkinsfile
 
 | # | Stage | Isi |
@@ -186,7 +192,8 @@ Dijalankan di mesin Linux (Docker 29.1.3, Compose 2.40.3, Jenkins LTS):
 | Uji end-to-end lewat Nginx | **17/17 lulus** (health, login, CRUD, 400/404, rate limit, logout) |
 | Data immunity — `docker rm -f` container backend | container ID berubah, **sha256 file JSON identik**, health `200` |
 | Redeploy lewat pipeline | data tetap sama setelah container diganti image commit baru |
-| Pipeline Jenkins | **build #4 SUCCESS**, lima stage hijau, image `visitor-log-backend:eb23b3afc563` |
+| Pipeline Jenkins | **build #4 dan #5 SUCCESS**, lima stage hijau, image di-tag commit SHA |
+| Webhook GitHub | push ke `main` → delivery **200 OK** → Jenkins `Started by GitHub push` (bukan Build Now) |
 
 Contoh bukti data immunity:
 

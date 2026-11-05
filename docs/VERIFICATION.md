@@ -57,6 +57,7 @@ Volume juga diperiksa setelah `docker compose down` (tanpa `-v`); sha256 tetap i
 | #2 | FAILURE | penyebab sama, build antre berikutnya |
 | #3 | SUCCESS | perbaikan `--env-file` pada stage Health Check |
 | #4 | SUCCESS | image di-tag commit SHA, bukan nomor build |
+| #5 | SUCCESS | dipicu **webhook GitHub**, bukan tombol Build Now |
 
 Build #4:
 
@@ -72,7 +73,12 @@ Finished: SUCCESS
 
 - Endpoint Jenkins: `https://<subdomain>.trycloudflare.com/github-webhook/`
 - Event: `push` saja, content type `application/json`
-- Bukti: push ke `main` memicu build baru tanpa menekan "Build Now"
+- Hook GitHub ID: `707893621`
+- Delivery GitHub: `push` → **200 OK**
+- Bukti build otomatis: `Started by GitHub push by argaulyaa`
+  (`GitHubPushCause`, bukan `UserIdCause` — jadi bukan "Build Now")
+- Build #5: **SUCCESS**, image `visitor-log-backend:ebb599191670` (sama dengan commit SHA),
+  health check lulus attempt 1
 
 ## Catatan lingkungan
 
