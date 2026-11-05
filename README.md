@@ -13,12 +13,9 @@
 
 | Nama | NIM |
 |---|---|
-| _isi nama_ | _isi NIM_ |
-| _isi nama_ | _isi NIM_ |
-| _isi nama_ | _isi NIM_ |
-| _isi nama_ | _isi NIM_ |
-
-> Ganti baris di atas dengan nama dan NIM sebenarnya sebelum dikumpulkan.
+| Arga Ulya Abdurohman | 101012300189 |
+| Mochammad Hakim Al Irsyad | 101012300152 |
+| Sandrina Eka Putri | 101012330279 |
 
 ## Studi Kasus
 
