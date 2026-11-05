@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Masuk · Monitor Laboratorium</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body data-view="login">
+    <header class="topbar">
+      <div class="shell bar-content">
+        <span class="wordmark"
+          >Laboratorium <span>/ Monitor kunjungan</span></span
+        >
+      </div>
+    </header>
+    <main class="login-main">
+      <p class="eyebrow">AKSES PENGELOLA</p>
+      <h1>Masuk</h1>
+      <p class="muted">
+        Gunakan akun pengelola untuk melihat dan mencatat kunjungan
+        laboratorium.
+      </p>
+      <p id="login-notice" class="error" role="alert" hidden>
+        Silakan login terlebih dahulu untuk mengakses monitor kunjungan.
+      </p>
+      <p id="error" class="error" role="alert" hidden></p>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <form id="login-form">
+        <div class="field">
+          <label for="username">Nama pengguna</label
+          ><input
+            id="username"
+            name="username"
+            autocomplete="username"
+            required
+            maxlength="256"
+            autocapitalize="none"
+            spellcheck="false"
+          />
+        </div>
+        <div class="field">
+          <label for="password">Kata sandi</label
+          ><input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            maxlength="1024"
+          />
+        </div>
+        <button type="submit">Masuk ke monitor</button>
+      </form>
+      <p class="muted footnote">
+        Sesi disimpan hanya untuk tab ini. Keluar setelah selesai menggunakan
+        monitor.
+      </p>
+    </main>
+  </body>
+</html>

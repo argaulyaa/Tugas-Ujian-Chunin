@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Log Kunjungan · Monitor Laboratorium</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="chart-data.js" defer></script>
+    <script src="chart.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body data-view="dashboard" hidden>
+    <a class="skip-link" href="#main">Lewati ke konten</a>
+    <header class="topbar">
+      <div class="shell bar-content">
+        <span class="wordmark"
+          >Laboratorium <span>/ Monitor kunjungan</span></span
+        ><button id="logout" class="quiet" type="button">Keluar</button>
+      </div>
+    </header>
+    <main id="main" class="shell" tabindex="-1">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">CATATAN AKTIVITAS</p>
+          <h1>Log kunjungan</h1>
+        </div>
+        <button id="refresh" class="quiet" type="button">
+          Muat ulang data
+        </button>
+      </div>
+      <p id="error" class="error" role="alert" hidden></p>
+      <p id="status" class="sr-only" role="status" aria-live="polite">
+        Menyiapkan data…
+      </p>
+      <section id="chart-section" aria-labelledby="chart-heading">
+        <h2 id="chart-heading">Grafik kunjungan</h2>
+
+        <form id="filters" class="entry-form">
+          <div class="field">
+            <label for="period">Pengelompokan</label
+            ><select id="period">
+              <option value="day">Harian · per jam</option>
+              <option value="week">Mingguan · per hari</option>
+              <option value="month">Bulanan · per tanggal</option>
+              <option value="year">Tahunan · per bulan</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="date">Tanggal acuan</label
+            ><input
+              id="date"
+              type="date"
+              min="2000-01-01"
+              max="9999-12-31"
+              required
+            />
+          </div>
+          <button>Tampilkan</button>
+        </form>
+
+        <p id="chart-error" class="error" role="alert" hidden></p>
+        <h2 id="range"></h2>
+        <div class="table-scroll">
+          <svg
+            id="chart"
+            viewBox="0 0 960 320"
+            role="img"
+            aria-labelledby="chart-title chart-description"
+          >
+            <title id="chart-title">Jumlah kunjungan</title>
+            <desc id="chart-description">
+              Jumlah log per interval dalam WIB.
+            </desc>
+          </svg>
+        </div>
+      </section>
+      <section class="entry-section" aria-labelledby="entry-title">
+        <div><h2 id="entry-title">Catat kunjungan manual</h2></div>
+        <form id="entry-form" class="entry-form">
+          <div class="field">
+            <label for="page">Halaman</label
+            ><input
+              id="page"
+              name="page"
+              type="text"
+              value="/"
+              readonly
+              maxlength="512"
+              required
+              aria-describedby="page-help"
+            /><small id="page-help">Halaman laboratorium: /</small>
+          </div>
+          <button type="submit">Tambah log</button>
+        </form>
+      </section>
+      <section
+        class="log-section"
+        aria-labelledby="history-title"
+        aria-busy="true"
+        id="log-section"
+      >
+        <div class="table-heading">
+          <h2 id="history-title">Riwayat kunjungan</h2>
+          <p class="count">
+            <strong id="total">—</strong> <span>log tersimpan</span>
+          </p>
+        </div>
+
+        <div
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Tabel log kunjungan, geser untuk melihat semua kolom"
+        >
+          <table>
+            <caption class="sr-only">
+              Daftar log kunjungan dari server
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Indeks</th>
+                <th scope="col">Halaman</th>
+                <th scope="col">Waktu</th>
+                <th scope="col">Alamat IP</th>
+                <th scope="col">Peramban / user agent</th>
+                <th scope="col">Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="logs">
+              <tr>
+                <td colspan="6" class="table-message">Memuat log…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

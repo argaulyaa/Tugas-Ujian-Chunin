@@ -1,0 +1,13 @@
+.venv*/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+*.bak
+*.sync-recovery
+evidence/
+.env.backup-*
+visitor_logs.json
+
+local-data/

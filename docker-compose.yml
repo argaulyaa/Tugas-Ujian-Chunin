@@ -1,0 +1,32 @@
+name: uts-visitor-log
+services:
+  backend:
+    image: visitor-log-backend:${IMAGE_TAG:-dev}
+    build: ./backend
+    environment:
+      DATA_DIR: /var/lib/backend_data
+      TRUSTED_PROXY: frontend
+      AUTH_USERNAME: ${AUTH_USERNAME:?Set AUTH_USERNAME in private .env}
+      AUTH_PASSWORD_HASH: ${AUTH_PASSWORD_HASH:?Set password verifier in private .env}
+      AUTH_SALT: ${AUTH_SALT:?Set password salt in private .env}
+    volumes:
+      - visitor-log-data:/var/lib/backend_data
+    networks: [app-net]
+    restart: unless-stopped
+  frontend:
+    image: nginx:alpine
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8090}:80"
+    networks: [app-net]
+    depends_on: [backend]
+    restart: unless-stopped
+networks:
+  app-net:
+    name: app-net
+    driver: bridge
+volumes:
+  visitor-log-data:
+    name: visitor-log-data
