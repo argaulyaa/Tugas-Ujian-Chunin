@@ -66,19 +66,22 @@ pipeline {
 
         stage('Health Check') {
             steps {
-                sh '''
-                    set -eu
-                    for attempt in $(seq 1 20); do
-                        if docker compose exec -T frontend wget -qO- http://127.0.0.1/api/health | grep -q '"status": "ok"'; then
-                            echo "Health check passed on attempt $attempt"
-                            exit 0
-                        fi
-                        sleep 3
-                    done
-                    echo "Health check failed; recent logs:"
-                    docker compose logs --tail=50
-                    exit 1
-                '''
+                withCredentials([file(credentialsId: 'visitor-log-env', variable: 'APP_ENV_FILE')]) {
+                    sh '''
+                        set -eu
+                        for attempt in $(seq 1 20); do
+                            if docker compose --env-file "$APP_ENV_FILE" exec -T frontend \
+                                wget -qO- http://127.0.0.1/api/health | grep -q '"status": "ok"'; then
+                                echo "Health check passed on attempt $attempt"
+                                exit 0
+                            fi
+                            sleep 3
+                        done
+                        echo "Health check failed; recent logs:"
+                        docker compose --env-file "$APP_ENV_FILE" logs --tail=50
+                        exit 1
+                    '''
+                }
             }
         }
     }
