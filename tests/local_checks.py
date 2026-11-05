@@ -21,9 +21,9 @@ before = output(['docker', 'inspect', 'uts-visitor-log-frontend-1', '--format', 
 probe = root / 'frontend' / ('bind-probe-' + secrets.token_hex(8) + '.txt')
 try:
     probe.write_text('first', encoding='utf-8')
-    assert urllib.request.urlopen('http://127.0.0.1:8090/' + probe.name).read() == b'first'
+    assert urllib.request.urlopen('http://127.0.0.1:8000/' + probe.name).read() == b'first'
     probe.write_text('updated-without-rebuild', encoding='utf-8')
-    assert urllib.request.urlopen('http://127.0.0.1:8090/' + probe.name).read() == b'updated-without-rebuild'
+    assert urllib.request.urlopen('http://127.0.0.1:8000/' + probe.name).read() == b'updated-without-rebuild'
     assert output(['docker', 'inspect', 'uts-visitor-log-frontend-1', '--format', '{{.Image}} {{.State.StartedAt}}']) == before
 finally:
     probe.unlink(missing_ok=True)
@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix='visitor-browser-') as profile:
     result = subprocess.run([str(edge), '--headless=new', '--disable-gpu', '--no-first-run',
                              '--user-data-dir=' + profile, '--window-size=1365,900',
                              '--screenshot=' + str(evidence / 'login-desktop.png'),
-                             '--dump-dom', 'http://127.0.0.1:8090/login.html'],
+                             '--dump-dom', 'http://127.0.0.1:8000/login.html'],
                             capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=45)
     assert result.returncode == 0, result.stderr[-500:]
     assert 'id="login-form"' in result.stdout

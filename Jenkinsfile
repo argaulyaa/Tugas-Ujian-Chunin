@@ -13,7 +13,7 @@ pipeline {
 
     environment {
         IMAGE_NAME    = 'visitor-log-backend'
-        FRONTEND_PORT = '8090'
+        FRONTEND_PORT = '8000'
     }
 
     triggers {

@@ -28,7 +28,7 @@ untuk publik.
 
 ```mermaid
 flowchart LR
-    U["Browser<br/>127.0.0.1:8090"]
+    U["Browser<br/>127.0.0.1:8000"]
 
     subgraph HOST["Docker Host"]
         SRC["./frontend<br/>(bind mount, read-only)"]
@@ -45,15 +45,46 @@ flowchart LR
     SRC -.->|"edit UI langsung terlihat<br/>tanpa rebuild image"| FE
 ```
 
-Alur CI/CD:
+Alur CI/CD (sesuai arsitektur wajib soal):
 
 ```mermaid
 flowchart LR
-    DEV["1. Developer<br/>commit + push"] -->|git push main| GH["2. GitHub<br/>argaulyaa/Tugas-Ujian-Chunin"]
-    GH -->|"webhook (HTTPS)"| NG["3. ngrok<br/>URL publik → :8080"]
-    NG --> JK["4. Jenkins<br/>5 stage declarative"]
-    JK -->|"docker build + compose up"| DK["5. Docker Engine<br/>backend + nginx + volume"]
-    DK --> US["6. Health check<br/>GET /api/health → 200"]
+    subgraph S1["1. Developer"]
+        D["Local development<br/>modify · commit · push"]
+    end
+
+    subgraph S2["2. GitHub Repository"]
+        G["main · source code<br/>Dockerfile · Jenkinsfile"]
+    end
+
+    subgraph S3["3. ngrok"]
+        N["HTTPS tunnel<br/>public URL → :8080"]
+    end
+
+    subgraph S4["4. Jenkins Server"]
+        J1["Receive webhook"]
+        J2["Checkout code (PAT)"]
+        J3["Build Docker image"]
+        J4["Deploy container"]
+        J5["Run health check"]
+        J1 --> J2 --> J3 --> J4 --> J5
+    end
+
+    subgraph S5["5. Docker Engine"]
+        C["API container<br/>Python REST API"]
+        V[("Named volume<br/>visitor-log-data")]
+        C --- V
+    end
+
+    subgraph S6["6. Users / Test"]
+        T["HTTP port 8000<br/>GET/POST/DELETE /logs<br/>GET /health"]
+    end
+
+    D -->|git push| G
+    G -->|webhook (HTTPS)| N
+    N -->|tunnel| J1
+    J5 -->|Docker CLI: build &amp; run| C
+    C -->|HTTP| T
 ```
 
 ## Prasyarat
@@ -73,10 +104,10 @@ AUTH_USERNAME=admin AUTH_PASSWORD='...' python3 setup_account.py --from-env   # 
 docker compose up -d --build
 
 # 3. Cek kesehatan
-curl -s http://127.0.0.1:8090/api/health       # {"status": "ok"}
+curl -s http://127.0.0.1:8000/api/health       # {"status": "ok"}
 ```
 
-Landing page: `http://127.0.0.1:8090` — dashboard: `http://127.0.0.1:8090/login.html`.
+Landing page: `http://127.0.0.1:8000` — dashboard: `http://127.0.0.1:8000/login.html`.
 
 Variabel yang dibaca dari `.env` (contoh lengkap di `.env.example`):
 
@@ -85,7 +116,7 @@ Variabel yang dibaca dari `.env` (contoh lengkap di `.env.example`):
 | `AUTH_USERNAME` | username dashboard |
 | `AUTH_SALT` | 32 karakter hex (16 byte acak) |
 | `AUTH_PASSWORD_HASH` | PBKDF2-HMAC-SHA256, 600.000 iterasi, hex |
-| `FRONTEND_PORT` | port host untuk Nginx (default `8090`) |
+| `FRONTEND_PORT` | port host untuk Nginx (default `8000`) |
 | `IMAGE_TAG` | tag image backend yang dipakai Compose (default `dev`) |
 
 ## API
@@ -114,7 +145,7 @@ menghapus satu entri menurunkan hitungan.
   (`http://backend:5000`), dengan `resolver 127.0.0.11` agar IP container tetap ter-resolve
   setelah redeploy.
 - **Port backend tidak dipublish**; satu-satunya pintu masuk adalah Nginx di
-  `127.0.0.1:8090` (loopback saja).
+  `127.0.0.1:8000` (loopback saja).
 
 ## CI/CD (Jenkins + GitHub Webhook + ngrok)
 

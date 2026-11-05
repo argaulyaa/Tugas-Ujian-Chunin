@@ -32,7 +32,7 @@ assert before['Id'] != after['Id']
 assert any(m.get('Name') == mount['Name'] and m['Destination'] == mount['Destination'] for m in after['Mounts'])
 for attempt in range(30):
     try:
-        with urllib.request.urlopen('http://127.0.0.1:8090/api/health', timeout=2) as response:
+        with urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2) as response:
             assert response.status == 200
         break
     except OSError:

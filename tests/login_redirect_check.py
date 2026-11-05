@@ -16,7 +16,7 @@ edge = r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
 with tempfile.TemporaryDirectory(prefix='visitor-redirect-') as profile:
     result = subprocess.run([edge, '--headless=new', '--disable-gpu', '--no-first-run',
         '--user-data-dir=' + profile, '--virtual-time-budget=5000', '--dump-dom',
-        'http://127.0.0.1:8090/' + (sys.argv[1] if len(sys.argv) > 1 else 'visitor-log.html')], capture_output=True, text=True,
+        'http://127.0.0.1:8000/' + (sys.argv[1] if len(sys.argv) > 1 else 'visitor-log.html')], capture_output=True, text=True,
         encoding='utf-8', errors='replace', timeout=45)
     assert result.returncode == 0, 'Edge failed'
     parser = Notice()

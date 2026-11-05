@@ -16,12 +16,12 @@ salt = secrets.token_hex(16)
 envfile = root / '.env'
 if envfile.exists():
     raise SystemExit('Existing .env preserved: configure smoke credentials deliberately')
-config = 'AUTH_USERNAME=local-test\nAUTH_SALT=' + salt + '\nAUTH_PASSWORD_HASH=' + hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(salt), 600000).hex() + '\nFRONTEND_PORT=8090\n'
+config = 'AUTH_USERNAME=local-test\nAUTH_SALT=' + salt + '\nAUTH_PASSWORD_HASH=' + hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(salt), 600000).hex() + '\nFRONTEND_PORT=8000\n'
 with envfile.open('x') as output:
     output.write(config)
 for args in (['config', '--quiet'], ['build', '--pull=false'], ['up', '-d', '--no-build', '--pull', 'never'], ['exec', '-T', 'frontend', 'nginx', '-t']):
     subprocess.run(['docker', 'compose', *args], check=True)
-base = 'http://127.0.0.1:8090'
+base = 'http://127.0.0.1:8000'
 for attempt in range(60):
     try:
         with urllib.request.urlopen(base+'/api/health', timeout=2) as response:
@@ -51,5 +51,5 @@ call('DELETE', 'logs?index='+str(after['total_hits']-1), token=token)
 assert call('GET', 'logs', token=token) == before
 call('POST', 'logout', token=token)
 print('PASS: Compose config/build/start, nginx syntax, proxy health, login, CRUD count decrement, logout')
-print('Only loopback port 8090 exposed. Random local-test password discarded; .env retains verifier only.')
+print('Only loopback port 8000 exposed. Random local-test password discarded; .env retains verifier only.')
 print('No container removal, server connection, registry pull or Git operation performed.')

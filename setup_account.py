@@ -36,6 +36,6 @@ if path.exists():
     print('Private recovery copy retained; do not commit .env* files.')
 # ponytail: single local account and fixed loopback port; no remote provisioning.
 with path.open('w', encoding='utf-8') as output:
-    output.write(f'AUTH_USERNAME={username}\nAUTH_SALT={salt}\nAUTH_PASSWORD_HASH={digest}\nFRONTEND_PORT=8090\n')
+    output.write(f'AUTH_USERNAME={username}\nAUTH_SALT={salt}\nAUTH_PASSWORD_HASH={digest}\nFRONTEND_PORT=8000\n')
 print('Verifier saved. Password was not stored or printed. Existing container config has NOT changed.')
 print('Ask for a scoped backend restart/recreation before using the account in Docker.')
